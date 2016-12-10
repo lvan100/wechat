@@ -65,8 +65,6 @@ void CWeChatView::OnDraw(CDC* pDC)
 {
 	if (dataList.size() > 0) {
 
-		DWORD start = GetTickCount();
-
 		CRect rcView;
 		GetClientRect(rcView);
 
@@ -80,16 +78,53 @@ void CWeChatView::OnDraw(CDC* pDC)
 		memDC.FillSolidRect(rcView, RGB(255, 255, 255));
 
 		CPoint pt = GetScrollPosition();
-		int offsetY = 0 - pt.y;
 
-		for (auto iter = dataList.begin(); iter != dataList.end(); iter++) {
-			offsetY += (*iter)->Show(&memDC, offsetY);
+		int offsetY = 0 - pt.y;
+		int maxY = rcView.Height();
+
+		CString str;
+		str.Format(L"offsetY:%d, maxY:%ld\n", pt.y, maxY);
+		OutputDebugString(str);
+
+		auto& iter = dataList.begin();
+
+		DWORD paint = GetTickCount();
+		DWORD start = GetTickCount();
+
+		int firstItemIndex = 0;
+
+		for (; iter != dataList.end(); iter++) {
+			offsetY += (*iter)->getHeight();
+			if (offsetY >= 0) {
+				offsetY -= (*iter)->getHeight();
+				break;
+			}
+			firstItemIndex++;
 		}
+
+		str.Format(L"find first item %d use time:%ld\n", firstItemIndex, GetTickCount() - start);
+		OutputDebugString(str);
+
+		start = GetTickCount();
+
+		int drawItemCount = 0;
+
+		for (; iter != dataList.end(); iter++) {
+			offsetY += (*iter)->Show(&memDC, offsetY);
+			drawItemCount++;
+			if (offsetY >= maxY) {
+				break;
+			}
+		}
+
+		str.Format(L"draw %d items use time:%ld\n", drawItemCount, GetTickCount() - start);
+		OutputDebugString(str);
 
 		pDC->BitBlt(pt.x, pt.y, rcView.Width(), rcView.Height(), &memDC, 0, 0, SRCCOPY);
 
-		CString str;
-		str.Format(L"paintCount:%d time:%ld\n", paintCount++, GetTickCount() - start);
+		str.Format(L"x:%d, y:%d, w:%d, h:%d, paintCount:%d time:%ld\n",
+			pt.x, pt.y, rcView.Width(), rcView.Height(),
+			paintCount++, GetTickCount() - paint);
 		OutputDebugString(str);
 	}
 }
@@ -207,7 +242,7 @@ int CWeChatView::loadMoreData(InsertPos pos) {
 
 	int newItemsHeight = 0;
 
-	for (int i = 0; i < rand() % 15; i++) {
+	for (int i = 0; i < 20; i++) {
 		ChatData* data = nullptr;
 
 		if (rand() % 2 == 0) {
@@ -242,16 +277,28 @@ void CWeChatView::OnFileOpen()
 {
 	int newItemsHeight = loadMoreData(InsertPos::Front);
 
-	CSize size = GetTotalSize();
-	size.cy += newItemsHeight;
+	CSize oldSize = GetTotalSize();
+
+	CSize newSize = GetTotalSize();
+	newSize.cy += newItemsHeight;
 
 	CPoint pt = GetScrollPosition();
 	pt.y += newItemsHeight;
 
 	paintCount = 0;
 
-	SetScrollSizes(MM_TEXT, size);
-	ScrollToPosition(pt);
+	SetRedraw(FALSE);
+	{
+		SetScrollSizes(MM_TEXT, newSize);
+		ScrollToPosition(pt);
+	}
+	SetRedraw(TRUE);
+
+	CString str;
+	str.Format(L"oldW:%d, oldH:%d, newW:%d, newH:%d\n",
+		oldSize.cx, oldSize.cy, newSize.cx, newSize.cy);
+	OutputDebugString(str);
+
 	Invalidate();
 }
 

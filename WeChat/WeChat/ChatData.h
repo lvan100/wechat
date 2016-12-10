@@ -18,6 +18,8 @@ public:
 	virtual int Show(CDC* pDC, int offsetY) = 0;
 	virtual int getHeight(CDC* pDC) = 0;
 
+	int getHeight() { return m_height; }
+
 protected:
 	bool haveSize;
 	int m_height;
@@ -33,11 +35,6 @@ public:
 
 	virtual int Show(CDC* pDC, int offsetY) {
 		assert(haveSize);
-
-		if (offsetY + m_height <= 0) {
-			return m_height;
-		}
-
 		pDC->DrawText(m_id, CRect(0, offsetY, 100, offsetY + m_height), DT_LEFT | DT_TOP);
 		pDC->DrawText(text, CRect(100, offsetY, MAX_TEXT_WIDTH + 100, offsetY + m_height), DT_LEFT | DT_TOP | DT_WORDBREAK);
 		return m_height;
@@ -64,11 +61,6 @@ public:
 
 	virtual int Show(CDC* pDC, int offsetY) {
 		assert(haveSize);
-
-		if (offsetY + m_height <= 0) {
-			return m_height;
-		}
-
 		pDC->DrawText(m_id, CRect(0, offsetY, 100, offsetY + m_height), DT_LEFT | DT_TOP);
 		image.Draw(pDC->GetSafeHdc(), CRect(100, offsetY, m_width + 100, offsetY + m_height));
 		return m_height;
