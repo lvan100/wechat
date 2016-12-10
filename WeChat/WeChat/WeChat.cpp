@@ -61,6 +61,7 @@ BOOL CWeChatApp::InitInstance()
 
 	CWinApp::InitInstance();
 
+	srand(time(nullptr));
 
 	// ≥ı ºªØ OLE ø‚
 	if (!AfxOleInit())

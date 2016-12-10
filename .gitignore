@@ -1,0 +1,7 @@
+/**/Debug/
+/**/ipch/
+/**/.vs/
+
+*.sdf
+*.opensdf
+/WeChat/WeChat/*.aps

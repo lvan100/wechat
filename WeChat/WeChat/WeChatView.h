@@ -4,6 +4,16 @@
 
 #pragma once
 
+#include "ChatData.h"
+
+#include <list>
+#include <memory>
+using namespace std;
+
+enum InsertPos {
+	Front,
+	Back,
+};
 
 class CWeChatView : public CScrollView
 {
@@ -17,6 +27,10 @@ public:
 
 // 操作
 public:
+	int loadMoreData(InsertPos pos);
+
+private:
+	list<unique_ptr<ChatData>> dataList;
 
 // 重写
 public:
@@ -37,10 +51,15 @@ public:
 #endif
 
 protected:
+	afx_msg void OnFileSave();
+	afx_msg void OnFileOpen();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
 // 生成的消息映射函数
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnFileNew();
 };
 
 #ifndef _DEBUG  // WeChatView.cpp 中的调试版本

@@ -62,6 +62,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar(&m_wndToolBar);
 
+	SetWindowPos(nullptr, 0, 0, 800, 600, SWP_NOMOVE);
+	CenterWindow(nullptr);
 
 	return 0;
 }
