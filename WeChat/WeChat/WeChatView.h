@@ -25,6 +25,8 @@ protected: // 仅从序列化创建
 public:
 	CWeChatDoc* GetDocument() const;
 
+	CFont m_text_font;
+
 // 操作
 public:
 	int loadMoreData(InsertPos pos);

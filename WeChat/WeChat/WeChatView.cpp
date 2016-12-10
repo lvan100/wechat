@@ -16,13 +16,13 @@
 #define new DEBUG_NEW
 #endif
 
-static CString g_str_data = L"在给定的矩形内调用该成员函数格式化文本。\
+CString g_str_data = L"在给定的矩形内调用该成员函数格式化文本。\n\
 		通过将制表值扩展到适当大小，使文本在给定矩形内左对齐、右对齐\
 		或居中，使文本断成多行以适应给定矩形来格式化文本，格式类型由\
 		nFormat指定。\n该成员函数适应设备上下文中选取的字体、文本颜色\
-         、背景色来显示本。";
+		、背景色来显示本。";
 
-static CImage g_img_data;
+CImage g_img_data;
 
 // CWeChatView
 
@@ -76,6 +76,8 @@ void CWeChatView::OnDraw(CDC* pDC)
 		bmp.CreateCompatibleBitmap(pDC, rcView.Width(), rcView.Height());
 
 		memDC.SelectObject(&bmp);
+		memDC.SelectObject(&m_text_font);
+
 		memDC.FillSolidRect(rcView, RGB(255, 255, 255));
 
 		CPoint pt = GetScrollPosition();
@@ -137,6 +139,14 @@ void CWeChatView::OnInitialUpdate()
 	if (g_img_data.IsNull()) {
 		g_img_data.Load(L"learn_xml.gif");
 	}
+
+	LOGFONT logFont = { 0 };
+	GetGlobalData()->fontRegular.GetLogFont(&logFont);
+
+	logFont.lfHeight = 24;
+	_tcscpy(logFont.lfFaceName, _T("微软雅黑"));
+
+	m_text_font.CreateFontIndirect(&logFont);
 
 	CSize sizeTotal;
 	sizeTotal.cx = sizeTotal.cy = 0;
@@ -240,6 +250,7 @@ void testCalcSize(CDC* pDC) {
 int CWeChatView::loadMoreData(InsertPos pos) {
 
 	CDC* pDC = GetDC();
+	CFont* pOldFont = pDC->SelectObject(&m_text_font);
 
 	int newItemsHeight = 0;
 
@@ -260,6 +271,8 @@ int CWeChatView::loadMoreData(InsertPos pos) {
 
 		newItemsHeight += data->getHeight(pDC);
 	}
+
+	pDC->SelectObject(pOldFont);
 
 	return newItemsHeight;
 }
