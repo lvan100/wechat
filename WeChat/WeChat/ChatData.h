@@ -2,13 +2,91 @@
 
 #include <assert.h>
 
+class ChatBubble {
+public:
+	void Draw(CDC* pDC, CRect rect) {
+
+		if (m_bubble.IsNull()) {
+			m_bubble.Load(L"bubble.png");
+		}
+
+		if (m_brush_left.GetSafeHandle() == NULL) {
+			CImage img;
+			img.Create(14, 7, 32);
+			m_bubble.BitBlt(img.GetDC(), 0, 0, 14, 7, 0, 28, SRCCOPY);
+			img.ReleaseDC();
+			m_brush_left.CreatePatternBrush(CBitmap::FromHandle(img.Detach()));
+		}
+
+		if (m_brush_top.GetSafeHandle() == NULL) {
+			CImage img;
+			img.Create(14, 28, 32);
+			m_bubble.BitBlt(img.GetDC(), 0, 0, 14, 28, 14, 0, SRCCOPY);
+			img.ReleaseDC();
+			m_brush_top.CreatePatternBrush(CBitmap::FromHandle(img.Detach()));
+		}
+
+		if (m_brush_right.GetSafeHandle() == NULL) {
+			CImage img;
+			img.Create(7, 7, 32);
+			m_bubble.BitBlt(img.GetDC(), 0, 0, 7, 7, 30, 28, SRCCOPY);
+			img.ReleaseDC();
+			m_brush_right.CreatePatternBrush(CBitmap::FromHandle(img.Detach()));
+		}
+
+		if (m_brush_bottom.GetSafeHandle() == NULL) {
+			CImage img;
+			img.Create(14, 7, 32);
+			m_bubble.BitBlt(img.GetDC(), 0, 0, 14, 7, 14, 35, SRCCOPY);
+			img.ReleaseDC();
+			m_brush_bottom.CreatePatternBrush(CBitmap::FromHandle(img.Detach()));
+		}
+
+		m_bubble.BitBlt(pDC->GetSafeHdc(), rect.left, rect.top, 14, 28, 0, 0, SRCCOPY);
+		m_bubble.BitBlt(pDC->GetSafeHdc(), rect.left, rect.bottom - 7, 14, 7, 0, 35, SRCCOPY);
+
+		m_bubble.BitBlt(pDC->GetSafeHdc(), rect.right - 7, rect.top, 7, 28, 30, 0, SRCCOPY);
+		m_bubble.BitBlt(pDC->GetSafeHdc(), rect.right - 7, rect.bottom - 7, 7, 7, 30, 35, SRCCOPY);
+
+		CPoint oldPoint = pDC->GetBrushOrg();
+
+		pDC->SetBrushOrg(rect.left, rect.top + 28);
+		pDC->FillRect(CRect(rect.left, rect.top + 28, rect.left + 14, rect.bottom - 7), &m_brush_left);
+
+		pDC->SetBrushOrg(rect.right - 7, rect.top + 28);
+		pDC->FillRect(CRect(rect.right - 7, rect.top + 28, rect.right, rect.bottom - 7), &m_brush_right);
+
+		pDC->SetBrushOrg(rect.left + 14, rect.top);
+		pDC->FillRect(CRect(rect.left + 14, rect.top, rect.right - 7, rect.top + 28), &m_brush_top);
+
+		pDC->SetBrushOrg(rect.left + 14, rect.bottom - 7);
+		pDC->FillRect(CRect(rect.left + 14, rect.bottom - 7, rect.right - 7, rect.bottom), &m_brush_bottom);
+
+		pDC->SetBrushOrg(oldPoint);
+	}
+
+protected:
+	CImage m_bubble;
+
+	CBrush m_brush_left;
+	CBrush m_brush_right;
+
+	CBrush m_brush_top;
+	CBrush m_brush_bottom;
+};
+
+extern ChatBubble theChatBubble;
+
 #define MAX_TEXT_WIDTH	500
 #define MAX_IMAGE_WIDTH	100
 
-#define MARGIN_LEFT		100
+#define HEAD_WIDTH		100
 
-#define MARGIN_TOP		4
-#define MARGIN_BOTTOM	4
+#define MARGIN_LEFT		12
+#define MARGIN_RIGHT	6
+
+#define MARGIN_TOP		12
+#define MARGIN_BOTTOM	12
 
 extern int newId();
 
@@ -46,14 +124,22 @@ public:
 		CRect rect;
 
 		rect.left = 0;
-		rect.right = MARGIN_LEFT;
-		rect.top = offsetY + MARGIN_TOP;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
+		rect.right = HEAD_WIDTH;
+		rect.top = offsetY + MARGIN_TOP / 2;
+		rect.bottom = offsetY + m_height - MARGIN_BOTTOM / 2;
 
 		pDC->DrawText(m_id, rect, DT_LEFT | DT_TOP);
 
-		rect.left = MARGIN_LEFT;
-		rect.right = MAX_TEXT_WIDTH + MARGIN_LEFT;
+		rect.left = HEAD_WIDTH;
+		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
+
+		theChatBubble.Draw(pDC, rect);
+
+		rect.left = HEAD_WIDTH + MARGIN_LEFT;
+		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT;
+
+		rect.top = offsetY + MARGIN_TOP;
+		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
 
 		pDC->DrawText(text, rect, DT_LEFT | DT_TOP | DT_WORDBREAK);
 
@@ -90,14 +176,22 @@ public:
 		CRect rect;
 
 		rect.left = 0;
-		rect.right = MARGIN_LEFT;
-		rect.top = offsetY + MARGIN_TOP;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
+		rect.right = HEAD_WIDTH;
+		rect.top = offsetY + MARGIN_TOP / 2;
+		rect.bottom = offsetY + m_height - MARGIN_BOTTOM / 2;
 
 		pDC->DrawText(m_id, rect, DT_LEFT | DT_TOP);
 
-		rect.left = MARGIN_LEFT;
-		rect.right = m_width + MARGIN_LEFT;
+		rect.left = HEAD_WIDTH;
+		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
+
+		theChatBubble.Draw(pDC, rect);
+
+		rect.left = HEAD_WIDTH + MARGIN_LEFT;
+		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT;
+
+		rect.top = offsetY + MARGIN_TOP;
+		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
 
 		image.Draw(pDC->GetSafeHdc(), rect);
 
