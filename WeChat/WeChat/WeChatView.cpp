@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CWeChatView, CScrollView)
 	ON_COMMAND(ID_FILE_OPEN, &CWeChatView::OnFileOpen)
 	ON_WM_ERASEBKGND()
 	ON_COMMAND(ID_FILE_NEW, &CWeChatView::OnFileNew)
+	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 // CWeChatView ¹¹Ôì/Îö¹¹
@@ -310,4 +311,17 @@ BOOL CWeChatView::OnEraseBkgnd(CDC* pDC)
 void CWeChatView::OnFileNew()
 {
 	testCalcSize(GetDC());
+}
+
+void CWeChatView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	if (nSBCode == SB_THUMBTRACK) {
+
+		SCROLLINFO si;
+		GetScrollInfo(SB_VERT, &si, SIF_TRACKPOS);
+
+		nPos = si.nTrackPos;
+	}
+
+	CScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
 }
