@@ -29,6 +29,8 @@ CString g_str_data2 = L"在给定的矩形内调用该成员函数格式化文本。\n\
 
 CImage g_img_data;
 
+UINT WM_LOAD_MORE_DATA = RegisterWindowMessage(L"WM_LOAD_MORE_DATA");
+
 // CWeChatView
 
 IMPLEMENT_DYNCREATE(CWeChatView, CScrollView)
@@ -47,6 +49,7 @@ BEGIN_MESSAGE_MAP(CWeChatView, CScrollView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_LBUTTONUP()
+	ON_REGISTERED_MESSAGE(WM_LOAD_MORE_DATA, OnLoadMoreData)
 END_MESSAGE_MAP()
 
 // CWeChatView 构造/析构
@@ -435,11 +438,45 @@ void CWeChatView::OnLButtonUp(UINT nFlags, CPoint point)
 	CScrollView::OnLButtonUp(nFlags, point);
 }
 
+BOOL CWeChatView::OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll)
+{
+
+	return CScrollView::OnScroll(nScrollCode, nPos, bDoScroll);
+}
+
 BOOL CWeChatView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 {
+	int offsetY = GetScrollPosition().y;
+
 	if (sizeScroll.cy < 0) {
 		sizeScroll.cy = 0 - scrollLineSize.cy;
+
+		if (offsetY + sizeScroll.cy < 0) {
+			PostMessage(WM_LOAD_MORE_DATA, InsertPos::Front);
+		}
+
+	} else {
+
+		CRect rcView;
+		GetClientRect(&rcView);
+
+		CSize size = GetTotalSize();
+
+		if (offsetY + rcView.Height() + sizeScroll.cy > size.cy) {
+			PostMessage(WM_LOAD_MORE_DATA, InsertPos::Back);
+		}
 	}
 
 	return CScrollView::OnScrollBy(sizeScroll, bDoScroll);
+}
+
+LRESULT CWeChatView::OnLoadMoreData(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == InsertPos::Back) {
+		OnFileSave();
+	} else {
+		OnFileOpen();
+	}
+
+	return TRUE;
 }

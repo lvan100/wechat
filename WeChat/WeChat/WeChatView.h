@@ -59,6 +59,7 @@ protected:
 	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
 	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
 
+	virtual BOOL OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll = TRUE);
 	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 
 // 实现
@@ -84,6 +85,8 @@ public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+
+	afx_msg LRESULT OnLoadMoreData(WPARAM wParam, LPARAM lParam);
 };
 
 #ifndef _DEBUG  // WeChatView.cpp 中的调试版本
