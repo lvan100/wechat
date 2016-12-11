@@ -2,6 +2,9 @@
 
 #include <assert.h>
 
+/**
+ * 聊天气泡
+ */
 class ChatBubble {
 
 public:
@@ -127,11 +130,12 @@ protected:
 	CBrush m_brush_center;
 };
 
+
 extern ChatBubble theChatBubble;
 extern ChatBubble theChatHoverBubble;
 
-#define MAX_TEXT_WIDTH	500
-#define MAX_IMAGE_WIDTH	100
+
+#define MAX_CHAT_WIDTH	500
 
 #define HEAD_WIDTH		100
 
@@ -141,7 +145,9 @@ extern ChatBubble theChatHoverBubble;
 #define MARGIN_TOP		12
 #define MARGIN_BOTTOM	12
 
+
 extern int newId();
+
 
 class ChatData {
 
@@ -153,132 +159,143 @@ public:
 	virtual ~ChatData() {}
 
 public:
-	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) = 0;
-	virtual int getHeight(CDC* pDC) = 0;
+	/**
+	 * 绘制聊天内容
+	 */
+	int Draw(CDC* pDC, int offsetY, CPoint ptHover) {
+		assert(haveSize);
 
-	int getHeight() { return m_height; }
+		CRect rect;
+
+		rect.left = 0;
+		rect.right = HEAD_WIDTH;
+		rect.top = offsetY + MARGIN_TOP / 2;
+		rect.bottom = offsetY + m_size.cy - MARGIN_BOTTOM / 2;
+
+		pDC->DrawText(m_id, rect, DT_LEFT | DT_TOP);
+
+		rect.left = HEAD_WIDTH;
+		rect.right = m_size.cx + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
+
+		if (rect.PtInRect(ptHover)) {
+			theChatHoverBubble.Draw(pDC, rect);
+		} else {
+			theChatBubble.Draw(pDC, rect);
+		}
+
+		rect.left = HEAD_WIDTH + MARGIN_LEFT;
+		rect.right = m_size.cx + HEAD_WIDTH + MARGIN_LEFT;
+
+		rect.top = offsetY + MARGIN_TOP;
+		rect.bottom = offsetY + m_size.cy - MARGIN_BOTTOM;
+
+		DrawChatData(pDC, rect);
+
+		return m_size.cy;
+	}
+
+	/**
+	 * 计算显示区域的大小
+	 */
+	int CalcSize(CDC* pDC) {
+		if (haveSize) {
+			return m_size.cy;
+		}
+
+		haveSize = true;
+
+		m_size = CalcChatDataSize(pDC);
+		m_size.cy += MARGIN_TOP + MARGIN_BOTTOM;
+
+		return m_size.cy;
+	}
+
+	/**
+	 * 获取显示区域的高度
+	 */
+	int GetHeight() {
+		assert(haveSize);
+		return m_size.cy;
+	}
 
 protected:
-	bool haveSize;
-	int m_height;
+	/**
+	 * 绘制聊天数据
+	 */
+	virtual void DrawChatData(CDC* pDC, CRect rect) = 0;
 
+	/**
+	 * 计算聊天数据的显示区域
+	 */
+	virtual CSize CalcChatDataSize(CDC* pDC) = 0;
+
+protected:
+	/**
+	 * 是否计算过显示区域
+	 */
+	bool haveSize;
+
+	/**
+	 * 显示区域的大小
+	 */
+	CSize m_size;
+
+	/**
+	 * 消息的ID
+	 */
 	CString m_id;
 };
 
+/**
+ * 文字聊天消息
+ */
 class TextChatData : public ChatData
 {
 public:
 	TextChatData(CString str) : text(str) {
 	}
 
-	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) {
-		assert(haveSize);
-
-		CRect rect;
-
-		rect.left = 0;
-		rect.right = HEAD_WIDTH;
-		rect.top = offsetY + MARGIN_TOP / 2;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM / 2;
-
-		pDC->DrawText(m_id, rect, DT_LEFT | DT_TOP);
-
-		rect.left = HEAD_WIDTH;
-		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
-
-		if (ptHover.y > offsetY && ptHover.y < offsetY + m_height) {
-			theChatHoverBubble.Draw(pDC, rect);
-		} else {
-			theChatBubble.Draw(pDC, rect);
-		}
-
-		rect.left = HEAD_WIDTH + MARGIN_LEFT;
-		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT;
-
-		rect.top = offsetY + MARGIN_TOP;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
-
-		int oldBkMode = pDC->GetBkMode();
-
+protected:
+	virtual void DrawChatData(CDC* pDC, CRect rect) override {
 		pDC->SetBkMode(TRANSPARENT);
 		pDC->DrawText(text, rect, DT_LEFT | DT_TOP | DT_WORDBREAK);
-
-		pDC->SetBkMode(oldBkMode);
-
-		return m_height;
 	}
 
-	virtual int getHeight(CDC* pDC) {
-		if (haveSize) {
-			return m_height;
-		}
-
-		haveSize = true;
-
-		CRect rect(0, 0, MAX_TEXT_WIDTH, MAXINT);
-		m_height = pDC->DrawText(text, rect, DT_LEFT | DT_TOP | DT_CALCRECT | DT_WORDBREAK);
-
-		m_height += MARGIN_TOP + MARGIN_BOTTOM;
-		return m_height;
+	virtual CSize CalcChatDataSize(CDC* pDC) override {
+		CRect rect(0, 0, MAX_CHAT_WIDTH, MAXINT);
+		pDC->DrawText(text, rect, DT_LEFT | DT_TOP | DT_CALCRECT | DT_WORDBREAK);
+		return rect.Size();
 	}
 
 protected:
 	CString text;
 };
 
+/**
+ * 图片聊天消息
+ */
 class ImageChatData : public ChatData
 {
 public:
 	ImageChatData(CImage& img) : image(img) {
 	}
 
-	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) {
-		assert(haveSize);
-
-		CRect rect;
-
-		rect.left = 0;
-		rect.right = HEAD_WIDTH;
-		rect.top = offsetY + MARGIN_TOP / 2;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM / 2;
-
-		pDC->DrawText(m_id, rect, DT_LEFT | DT_TOP);
-
-		rect.left = HEAD_WIDTH;
-		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
-
-		if (ptHover.y > offsetY && ptHover.y < offsetY + m_height) {
-			theChatHoverBubble.Draw(pDC, rect);
-		} else {
-			theChatBubble.Draw(pDC, rect);
-		}
-
-		rect.left = HEAD_WIDTH + MARGIN_LEFT;
-		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT;
-
-		rect.top = offsetY + MARGIN_TOP;
-		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
-
+	virtual void DrawChatData(CDC* pDC, CRect rect) override {
+		rect.right = m_img_size.cx + HEAD_WIDTH + MARGIN_LEFT;
 		image.Draw(pDC->GetSafeHdc(), rect);
-
-		return m_height;
 	}
 
-	virtual int getHeight(CDC* pDC) {
-		if (haveSize) {
-			return m_height;
-		}
-
-		haveSize = true;
-
-		m_width = min(image.GetWidth(), MAX_IMAGE_WIDTH);
-		m_height = m_width * image.GetHeight() / image.GetWidth();
-
-		m_height += MARGIN_TOP + MARGIN_BOTTOM;
-		return m_height;
+	virtual CSize CalcChatDataSize(CDC* pDC) override {
+		m_img_size.cx = min(image.GetWidth(), MAX_CHAT_WIDTH);
+		m_img_size.cy = m_img_size.cx * image.GetHeight() / image.GetWidth();
+		return m_img_size;
 	}
 
 protected:
 	CImage image;
-	int m_width;
+
+	/**
+	 * 图像的显示大小
+	 */
+	CSize m_img_size;
 };

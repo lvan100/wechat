@@ -34,8 +34,6 @@ public:
 private:
 	list<unique_ptr<ChatData>> dataList;
 
-	void ReDraw();
-
 // 重写
 public:
 	virtual void OnDraw(CDC* pDC);  // 重写以绘制该视图

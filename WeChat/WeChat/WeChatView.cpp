@@ -19,7 +19,9 @@
 const CSize scrollPageSize = { 40,40 };
 const CSize scrollLineSize = { 40,40 };
 
-CString g_str_data = L"在给定的矩形内调用该成员函数格式化文本。\n\
+CString g_str_data = L"在给定的矩形内调用该成员函数格式化文本。";
+
+CString g_str_data2 = L"在给定的矩形内调用该成员函数格式化文本。\n\
 		通过将制表值扩展到适当大小，使文本在给定矩形内左对齐、右对齐\
 		或居中，使文本断成多行以适应给定矩形来格式化文本，格式类型由\
 		nFormat指定。\n该成员函数适应设备上下文中选取的字体、文本颜色\
@@ -70,6 +72,8 @@ int paintCount = 0;
 
 void CWeChatView::OnDraw(CDC* pDC)
 {
+	CPaintDC* dc = (CPaintDC*)pDC;
+
 	CRect rcView;
 	GetClientRect(rcView);
 
@@ -104,9 +108,9 @@ void CWeChatView::OnDraw(CDC* pDC)
 		int firstItemIndex = 0;
 
 		for (; iter != dataList.end(); iter++) {
-			offsetY += (*iter)->getHeight();
+			offsetY += (*iter)->GetHeight();
 			if (offsetY >= 0) {
-				offsetY -= (*iter)->getHeight();
+				offsetY -= (*iter)->GetHeight();
 				break;
 			}
 			firstItemIndex++;
@@ -124,7 +128,7 @@ void CWeChatView::OnDraw(CDC* pDC)
 		int drawItemCount = 0;
 
 		for (; iter != dataList.end(); iter++) {
-			offsetY += (*iter)->Show(&memDC, offsetY, ptHover);
+			offsetY += (*iter)->Draw(&memDC, offsetY, ptHover);
 			drawItemCount++;
 			if (offsetY >= maxY) {
 				break;
@@ -239,7 +243,7 @@ void testCalcSize(CDC* pDC) {
 
 	int offsetY = 0;
 	for (auto iter = dataList.begin(); iter != dataList.end(); iter++) {
-		offsetY += (*iter)->getHeight(pDC);
+		offsetY += (*iter)->CalcSize(pDC);
 		offsetY += 8;
 	}
 
@@ -250,7 +254,7 @@ void testCalcSize(CDC* pDC) {
 
 	offsetY = 0;
 	for (auto iter = dataList.begin(); iter != dataList.end(); iter++) {
-		offsetY += (*iter)->getHeight(pDC);
+		offsetY += (*iter)->CalcSize(pDC);
 		offsetY += 8;
 	}
 
@@ -269,7 +273,7 @@ int CWeChatView::loadMoreData(InsertPos pos) {
 		ChatData* data = nullptr;
 
 		if (rand() % 2 == 0) {
-			data = new TextChatData(g_str_data);
+			data = new TextChatData((rand() % 2) ? g_str_data : g_str_data2);
 		} else {
 			data = new ImageChatData(g_img_data);
 		}
@@ -280,7 +284,7 @@ int CWeChatView::loadMoreData(InsertPos pos) {
 			dataList.push_back(unique_ptr<ChatData>(data));
 		}
 
-		newItemsHeight += data->getHeight(pDC);
+		newItemsHeight += data->CalcSize(pDC);
 	}
 
 	pDC->SelectObject(pOldFont);
@@ -352,26 +356,23 @@ void CWeChatView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CWeChatView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	ReDraw();
+	Invalidate();
 
 	CScrollView::OnMouseMove(nFlags, point);
 }
 
 void CWeChatView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	ReDraw();
+	Invalidate();
 
 	CScrollView::OnLButtonDown(nFlags, point);
 }
 
 BOOL CWeChatView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	ReDraw();
+	// 每次滚动之后，窗口会设置剪裁区，而这个剪裁区很小，所以需要
+	// 重新设置一下窗口的剪裁区。
+	Invalidate();
 
 	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
-}
-
-void CWeChatView::ReDraw()
-{
-	Invalidate();
 }
