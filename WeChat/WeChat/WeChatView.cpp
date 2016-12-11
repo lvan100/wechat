@@ -87,7 +87,7 @@ void CWeChatView::OnDraw(CDC* pDC)
 	memDC.SelectObject(&bmp);
 	memDC.SelectObject(&m_text_font);
 
-	memDC.FillSolidRect(rcView, RGB(237, 245, 247));
+	memDC.FillSolidRect(rcView, RGB(245, 245, 245));
 
 	CPoint pt = GetScrollPosition();
 
@@ -389,13 +389,13 @@ void CWeChatView::OnMouseMove(UINT nFlags, CPoint point)
 
 void CWeChatView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (m_last_press_chat != nullptr) {
-		m_last_press_chat->SetPressed(false);
-	}
-
 	ChatData* chat = HitTest(point);
-
 	if (chat != m_last_press_chat) {
+
+		if (m_last_press_chat != nullptr) {
+			m_last_press_chat->SetPressed(false);
+		}
+
 		m_last_press_chat = chat;
 
 		if (m_last_press_chat != nullptr) {
@@ -412,9 +412,20 @@ BOOL CWeChatView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// 每次滚动之后，窗口会设置剪裁区，而这个剪裁区很小，所以需要
 	// 重新设置一下窗口的剪裁区。
+
 	Invalidate();
 
-	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
+	BOOL result = CScrollView::OnMouseWheel(nFlags, zDelta, pt);
+
+	CPoint ptCursor = pt;
+	ScreenToClient(&ptCursor);
+
+	ChatData* chat = HitTest(ptCursor);
+	if (chat != m_last_hover_chat) {
+		m_last_hover_chat = chat;
+	}
+
+	return result;
 }
 
 void CWeChatView::OnLButtonUp(UINT nFlags, CPoint point)
