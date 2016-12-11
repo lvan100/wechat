@@ -11,6 +11,8 @@
 #include "WeChatDoc.h"
 #include "WeChatView.h"
 
+#include "ChatData.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -62,6 +64,9 @@ BOOL CWeChatApp::InitInstance()
 	CWinApp::InitInstance();
 
 	srand(time(nullptr));
+
+	theChatBubble.LoadImage(L"bubble.png");
+	theChatHoverBubble.LoadImage(L"bubble-hover.png");
 
 	// ≥ı ºªØ OLE ø‚
 	if (!AfxOleInit())

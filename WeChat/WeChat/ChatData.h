@@ -13,30 +13,32 @@ public:
 	const int vertical_center = 7;
 	const int vertical_bottom = 7;
 
+	// 湘幸鯉俳夕圻尖幣吭夕:
+	//
+	//                        horizon_left   |   horizon_center   |    horizon_right
+	//                    |！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！|
+	//                    |                  |                    |                    |
+	//  vertical_top      |        1         |          2         |          3         |
+	//                    |                  |                    |                    |
+	//                 ！！！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！！！
+	//                    |                  |                    |                    |
+	//   vertical_center  |        4         |          5         |          6         |
+	//                    |                  |                    |                    |
+	//                 ！！！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！！！
+	//                    |                  |                    |                    |
+	//   vertical_bottom  |        7         |          8         |          9         |
+	//                    |                  |                    |                    |
+	//                    |！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！|
+	//                                       |                    |
+
 public:
-	void Draw(CDC* pDC, CRect rect) {
-
+	void LoadImage(CString imgPath) {
 		if (m_bubble.IsNull()) {
-			m_bubble.Load(L"bubble.png");
+			m_bubble.Load(imgPath);
 		}
+	}
 
-		// 湘幸鯉俳夕圻尖幣吭夕:
-		//
-		//                        horizon_left   |   horizon_center   |    horizon_right
-		//                    |！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！|
-		//                    |                  |                    |                    |
-		//  vertical_top      |        1         |          2         |          3         |
-		//                    |                  |                    |                    |
-		//                 ！！！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！！！
-		//                    |                  |                    |                    |
-		//   vertical_center  |        4         |          5         |          6         |
-		//                    |                  |                    |                    |
-		//                 ！！！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！！！
-		//                    |                  |                    |                    |
-		//   vertical_bottom  |        7         |          8         |          9         |
-		//                    |                  |                    |                    |
-		//                    |！！！！！！！！！|！！！！！！！！！！|！！！！！！！！！！|
-		//                                       |                    |
+	void Draw(CDC* pDC, CRect rect) {
 
 		if (m_brush_left.GetSafeHandle() == NULL) { // 崙恬 4 議鮫泡
 			CImage img;
@@ -126,6 +128,7 @@ protected:
 };
 
 extern ChatBubble theChatBubble;
+extern ChatBubble theChatHoverBubble;
 
 #define MAX_TEXT_WIDTH	500
 #define MAX_IMAGE_WIDTH	100
@@ -150,7 +153,7 @@ public:
 	virtual ~ChatData() {}
 
 public:
-	virtual int Show(CDC* pDC, int offsetY) = 0;
+	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) = 0;
 	virtual int getHeight(CDC* pDC) = 0;
 
 	int getHeight() { return m_height; }
@@ -168,7 +171,7 @@ public:
 	TextChatData(CString str) : text(str) {
 	}
 
-	virtual int Show(CDC* pDC, int offsetY) {
+	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) {
 		assert(haveSize);
 
 		CRect rect;
@@ -183,7 +186,11 @@ public:
 		rect.left = HEAD_WIDTH;
 		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
 
-		theChatBubble.Draw(pDC, rect);
+		if (ptHover.y > offsetY && ptHover.y < offsetY + m_height) {
+			theChatHoverBubble.Draw(pDC, rect);
+		} else {
+			theChatBubble.Draw(pDC, rect);
+		}
 
 		rect.left = HEAD_WIDTH + MARGIN_LEFT;
 		rect.right = MAX_TEXT_WIDTH + HEAD_WIDTH + MARGIN_LEFT;
@@ -191,8 +198,12 @@ public:
 		rect.top = offsetY + MARGIN_TOP;
 		rect.bottom = offsetY + m_height - MARGIN_BOTTOM;
 
+		int oldBkMode = pDC->GetBkMode();
+
 		pDC->SetBkMode(TRANSPARENT);
 		pDC->DrawText(text, rect, DT_LEFT | DT_TOP | DT_WORDBREAK);
+
+		pDC->SetBkMode(oldBkMode);
 
 		return m_height;
 	}
@@ -221,7 +232,7 @@ public:
 	ImageChatData(CImage& img) : image(img) {
 	}
 
-	virtual int Show(CDC* pDC, int offsetY) {
+	virtual int Show(CDC* pDC, int offsetY, CPoint ptHover) {
 		assert(haveSize);
 
 		CRect rect;
@@ -236,7 +247,11 @@ public:
 		rect.left = HEAD_WIDTH;
 		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
 
-		theChatBubble.Draw(pDC, rect);
+		if (ptHover.y > offsetY && ptHover.y < offsetY + m_height) {
+			theChatHoverBubble.Draw(pDC, rect);
+		} else {
+			theChatBubble.Draw(pDC, rect);
+		}
 
 		rect.left = HEAD_WIDTH + MARGIN_LEFT;
 		rect.right = m_width + HEAD_WIDTH + MARGIN_LEFT;

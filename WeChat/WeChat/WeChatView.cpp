@@ -16,6 +16,9 @@
 #define new DEBUG_NEW
 #endif
 
+const CSize scrollPageSize = { 40,40 };
+const CSize scrollLineSize = { 40,40 };
+
 CString g_str_data = L"在给定的矩形内调用该成员函数格式化文本。\n\
 		通过将制表值扩展到适当大小，使文本在给定矩形内左对齐、右对齐\
 		或居中，使文本断成多行以适应给定矩形来格式化文本，格式类型由\
@@ -38,6 +41,9 @@ BEGIN_MESSAGE_MAP(CWeChatView, CScrollView)
 	ON_WM_ERASEBKGND()
 	ON_COMMAND(ID_FILE_NEW, &CWeChatView::OnFileNew)
 	ON_WM_VSCROLL()
+	ON_WM_MOUSEMOVE()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 // CWeChatView 构造/析构
@@ -64,23 +70,25 @@ int paintCount = 0;
 
 void CWeChatView::OnDraw(CDC* pDC)
 {
+	CRect rcView;
+	GetClientRect(rcView);
+
+	CDC memDC;
+	memDC.CreateCompatibleDC(pDC);
+
+	CBitmap bmp;
+	bmp.CreateCompatibleBitmap(pDC, rcView.Width(), rcView.Height());
+
+	memDC.SelectObject(&bmp);
+	memDC.SelectObject(&m_text_font);
+
+	memDC.FillSolidRect(rcView, RGB(237, 245, 247));
+
+	CPoint pt = GetScrollPosition();
+
+	DWORD paint = GetTickCount();
+
 	if (dataList.size() > 0) {
-
-		CRect rcView;
-		GetClientRect(rcView);
-
-		CDC memDC;
-		memDC.CreateCompatibleDC(pDC);
-
-		CBitmap bmp;
-		bmp.CreateCompatibleBitmap(pDC, rcView.Width(), rcView.Height());
-
-		memDC.SelectObject(&bmp);
-		memDC.SelectObject(&m_text_font);
-
-		memDC.FillSolidRect(rcView, RGB(237, 245, 247));
-
-		CPoint pt = GetScrollPosition();
 
 		int offsetY = 0 - pt.y;
 		int maxY = rcView.Height();
@@ -91,7 +99,6 @@ void CWeChatView::OnDraw(CDC* pDC)
 
 		auto& iter = dataList.begin();
 
-		DWORD paint = GetTickCount();
 		DWORD start = GetTickCount();
 
 		int firstItemIndex = 0;
@@ -108,12 +115,16 @@ void CWeChatView::OnDraw(CDC* pDC)
 		str.Format(L"find first item %d use time:%ld\n", firstItemIndex, GetTickCount() - start);
 		OutputDebugString(str);
 
+		CPoint ptHover;
+		GetCursorPos(&ptHover);
+		ScreenToClient(&ptHover);
+
 		start = GetTickCount();
 
 		int drawItemCount = 0;
 
 		for (; iter != dataList.end(); iter++) {
-			offsetY += (*iter)->Show(&memDC, offsetY);
+			offsetY += (*iter)->Show(&memDC, offsetY, ptHover);
 			drawItemCount++;
 			if (offsetY >= maxY) {
 				break;
@@ -122,14 +133,15 @@ void CWeChatView::OnDraw(CDC* pDC)
 
 		str.Format(L"draw %d items use time:%ld\n", drawItemCount, GetTickCount() - start);
 		OutputDebugString(str);
-
-		pDC->BitBlt(pt.x, pt.y, rcView.Width(), rcView.Height(), &memDC, 0, 0, SRCCOPY);
-
-		str.Format(L"x:%d, y:%d, w:%d, h:%d, paintCount:%d time:%ld\n",
-			pt.x, pt.y, rcView.Width(), rcView.Height(),
-			paintCount++, GetTickCount() - paint);
-		OutputDebugString(str);
 	}
+
+	pDC->BitBlt(pt.x, pt.y, rcView.Width(), rcView.Height(), &memDC, 0, 0, SRCCOPY);
+
+	CString str;
+	str.Format(L"x:%d, y:%d, w:%d, h:%d, paintCount:%d time:%ld\n",
+		pt.x, pt.y, rcView.Width(), rcView.Height(),
+		paintCount++, GetTickCount() - paint);
+	OutputDebugString(str);
 }
 
 void CWeChatView::OnInitialUpdate()
@@ -148,9 +160,8 @@ void CWeChatView::OnInitialUpdate()
 
 	m_text_font.CreateFontIndirect(&logFont);
 
-	CSize sizeTotal;
-	sizeTotal.cx = sizeTotal.cy = 0;
-	SetScrollSizes(MM_TEXT, sizeTotal);
+	CSize sizeTotal = { 0,0 };
+	SetScrollSizes(MM_TEXT, sizeTotal, scrollPageSize, scrollLineSize);
 }
 
 
@@ -284,7 +295,7 @@ void CWeChatView::OnFileSave()
 	CSize size = GetTotalSize();
 	size.cy += newItemsHeight;
 
-	SetScrollSizes(MM_TEXT, size);
+	SetScrollSizes(MM_TEXT, size, scrollPageSize, scrollLineSize);
 }
 
 void CWeChatView::OnFileOpen()
@@ -303,7 +314,7 @@ void CWeChatView::OnFileOpen()
 
 	SetRedraw(FALSE);
 	{
-		SetScrollSizes(MM_TEXT, newSize);
+		SetScrollSizes(MM_TEXT, newSize, scrollPageSize, scrollLineSize);
 		ScrollToPosition(pt);
 	}
 	SetRedraw(TRUE);
@@ -337,4 +348,30 @@ void CWeChatView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	}
 
 	CScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CWeChatView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	ReDraw();
+
+	CScrollView::OnMouseMove(nFlags, point);
+}
+
+void CWeChatView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	ReDraw();
+
+	CScrollView::OnLButtonDown(nFlags, point);
+}
+
+BOOL CWeChatView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	ReDraw();
+
+	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+void CWeChatView::ReDraw()
+{
+	Invalidate();
 }

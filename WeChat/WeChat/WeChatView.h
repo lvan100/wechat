@@ -34,6 +34,8 @@ public:
 private:
 	list<unique_ptr<ChatData>> dataList;
 
+	void ReDraw();
+
 // 重写
 public:
 	virtual void OnDraw(CDC* pDC);  // 重写以绘制该视图
@@ -63,6 +65,9 @@ protected:
 public:
 	afx_msg void OnFileNew();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
 
 #ifndef _DEBUG  // WeChatView.cpp 中的调试版本
