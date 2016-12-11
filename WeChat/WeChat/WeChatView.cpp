@@ -78,7 +78,7 @@ void CWeChatView::OnDraw(CDC* pDC)
 		memDC.SelectObject(&bmp);
 		memDC.SelectObject(&m_text_font);
 
-		memDC.FillSolidRect(rcView, RGB(255, 255, 255));
+		memDC.FillSolidRect(rcView, RGB(237, 245, 247));
 
 		CPoint pt = GetScrollPosition();
 
