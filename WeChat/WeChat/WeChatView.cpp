@@ -434,3 +434,12 @@ void CWeChatView::OnLButtonUp(UINT nFlags, CPoint point)
 
 	CScrollView::OnLButtonUp(nFlags, point);
 }
+
+BOOL CWeChatView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
+{
+	if (sizeScroll.cy < 0) {
+		sizeScroll.cy = 0 - scrollLineSize.cy;
+	}
+
+	return CScrollView::OnScrollBy(sizeScroll, bDoScroll);
+}

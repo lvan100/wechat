@@ -59,6 +59,8 @@ protected:
 	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
 	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
 
+	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
+
 // й╣ож
 public:
 	virtual ~CWeChatView();
