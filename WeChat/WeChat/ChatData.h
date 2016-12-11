@@ -152,7 +152,7 @@ extern int newId();
 class ChatData {
 
 public:
-	ChatData() : haveSize(false) {
+	ChatData() : haveSize(false), m_pressed(false) {
 		m_id.Format(L"%d", newId());
 	}
 
@@ -177,7 +177,7 @@ public:
 		rect.left = HEAD_WIDTH;
 		rect.right = m_size.cx + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
 
-		if (rect.PtInRect(ptHover)) {
+		if (m_pressed || rect.PtInRect(ptHover)) {
 			theChatHoverBubble.Draw(pDC, rect);
 		} else {
 			theChatBubble.Draw(pDC, rect);
@@ -218,6 +218,28 @@ public:
 		return m_size.cy;
 	}
 
+	/**
+	 * 设置鼠标按下状态
+	 */
+	void SetPressed(bool pressed) {
+		m_pressed = pressed;
+	}
+
+	/**
+	 * 测试鼠标是否击中
+	 */
+	bool HitTest(int offsetY, CPoint point) {
+		CRect rect;
+
+		rect.top = offsetY + MARGIN_TOP / 2;
+		rect.bottom = offsetY + m_size.cy - MARGIN_BOTTOM / 2;
+
+		rect.left = HEAD_WIDTH;
+		rect.right = m_size.cx + HEAD_WIDTH + MARGIN_LEFT + MARGIN_RIGHT;
+
+		return rect.PtInRect(point) ? true : false;
+	}
+
 protected:
 	/**
 	 * 绘制聊天数据
@@ -230,6 +252,11 @@ protected:
 	virtual CSize CalcChatDataSize(CDC* pDC) = 0;
 
 protected:
+	/**
+	 * 鼠标按下状态
+	 */
+	bool m_pressed;
+
 	/**
 	 * 是否计算过显示区域
 	 */

@@ -31,7 +31,22 @@ public:
 public:
 	int loadMoreData(InsertPos pos);
 
+	ChatData* HitTest(CPoint point);
+
 private:
+	/**
+	 * 上一次鼠标按下的聊天消息
+	 */
+	ChatData* m_last_press_chat = nullptr;
+
+	/**
+	 * 上一次击中的聊天消息
+	 */
+	ChatData* m_last_hover_chat = nullptr;
+
+	/**
+	 * 聊天消息列表
+	 */
 	list<unique_ptr<ChatData>> dataList;
 
 // 重写
@@ -66,6 +81,7 @@ public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 };
 
 #ifndef _DEBUG  // WeChatView.cpp 中的调试版本

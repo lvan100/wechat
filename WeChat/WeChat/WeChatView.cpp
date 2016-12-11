@@ -46,6 +46,7 @@ BEGIN_MESSAGE_MAP(CWeChatView, CScrollView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 // CWeChatView 构造/析构
@@ -160,7 +161,7 @@ void CWeChatView::OnInitialUpdate()
 	GetGlobalData()->fontRegular.GetLogFont(&logFont);
 
 	logFont.lfHeight = 24;
-	_tcscpy(logFont.lfFaceName, _T("微软雅黑"));
+	_tcscpy_s(logFont.lfFaceName, _T("微软雅黑"));
 
 	m_text_font.CreateFontIndirect(&logFont);
 
@@ -354,16 +355,55 @@ void CWeChatView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	CScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
 }
 
+ChatData* CWeChatView::HitTest(CPoint point)
+{
+	int offsetY = 0 - GetScrollPosition().y;
+	int newOffsetY = offsetY;
+
+	for (auto& chat : dataList) {
+		newOffsetY += chat->GetHeight();
+		if (point.y >= offsetY && point.y <= newOffsetY) {
+			if (chat->HitTest(offsetY, point)) {
+				return chat.get();
+			} else {
+				break;
+			}
+		}
+		offsetY = newOffsetY;
+	}
+
+	return nullptr;
+}
+
 void CWeChatView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	Invalidate();
+	ChatData* chat = HitTest(point);
+
+	if (chat != m_last_hover_chat) {
+		m_last_hover_chat = chat;
+		Invalidate();
+	}
 
 	CScrollView::OnMouseMove(nFlags, point);
 }
 
 void CWeChatView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	Invalidate();
+	if (m_last_press_chat != nullptr) {
+		m_last_press_chat->SetPressed(false);
+	}
+
+	ChatData* chat = HitTest(point);
+
+	if (chat != m_last_press_chat) {
+		m_last_press_chat = chat;
+
+		if (m_last_press_chat != nullptr) {
+			m_last_press_chat->SetPressed(true);
+		}
+
+		Invalidate();
+	}
 
 	CScrollView::OnLButtonDown(nFlags, point);
 }
@@ -375,4 +415,11 @@ BOOL CWeChatView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	Invalidate();
 
 	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+void CWeChatView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+
+	CScrollView::OnLButtonUp(nFlags, point);
 }
